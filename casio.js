@@ -56,6 +56,9 @@ function tick() {
 				if (digits[faller - 1].isBlank()) {
 					// Hooray! Do something?
 					++score;
+					if (faller == 1)
+						// We just destroyed the last digit, so add one now rather than waiting.
+						addNumber();
 				}
 			} else
 				addNumber();
