@@ -1,14 +1,25 @@
 var digits,
 	next,
 	ticker,
+	gameOn = false,
+	gameIsOver = false,
 	score,
 	attempts,
+	fastFalling,
 	faller = null;
 
 document.addEventListener('DOMContentLoaded', function () {
-	init();
+	show('0161tr15');
 	document.body.addEventListener('keydown', function(e) {
 		switch(e.keyCode) {
+			case 32:
+				if (gameOn)
+					fastFalling = true;
+				else if (gameIsOver) {
+					gameIsOver = false;
+					show(score);
+				} else init();
+				break;
 			case 38: moveUp(); break;
 			case 40: moveDown(); break;
 			case 37: spinLeft(); break;
@@ -23,19 +34,26 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function init() {
-	if (ticker)
-		clearInterval(ticker);
+	stopTick();
+	gameOn = true;
+	fastFalling = false;
 	score = 0;
 	attempts = 0;
 	digits = [];
-	for (var i = 0; i < 10; ++i)
+	for (var i = 0; i < 8; ++i)
 		digits.push(new Digit());
 	addNumber();
 	pickNext();
-	ticker = setInterval(tick, 500);
+	tick();
+}
+
+function stopTick() {
+	if (ticker)
+		clearTimeout(ticker);
 }
 
 function tick() {
+	ticker = setTimeout(tick, fastFalling ? 100 : 500);
 	if (faller !== null) {
 		if (digits[faller - 1].isBlank()) {
 			digits[faller - 1] = digits[faller];
@@ -43,28 +61,46 @@ function tick() {
 			--faller;
 		} else {
 			// Collision!
-			var fallingDigit = digits[faller];
+			fastFalling = false;
+			var fallingDigit = digits[faller],
+				targetDigit = digits[faller - 1],
+				segmentCount = 0,
+				loneSegmentIsHorizontal = null;
 			// The faller has landed. Destroy it.
 			digits[faller] = new Digit();
-			// Toggle all the bits that match the faller.
-			fallingDigit.segments.forEach(function(on, i) {
-				if (on)
-					digits[faller - 1].segments[i] =
-						!digits[faller - 1].segments[i];
-			});
-			// Have we cleared the digit?
-			if (digits[faller - 1].isBlank()) {
+
+			if (fallingDigit.segmentCount() == 1) {
+				var segment = fallingDigit.loneSegment(),
+					isVertical = !!(segment % 3);
+				// A single vertical segment is side-agnostic
+				if (isVertical) {
+					if (segment < 3) {
+						if (targetDigit.segments[2])
+							targetDigit.segments[2] = false;
+						else if (targetDigit.segments[1])
+							targetDigit.segments[1] = false;
+						else handleCollision(fallingDigit);
+					} else {
+						if (targetDigit.segments[5])
+							targetDigit.segments[5] = false;
+						else if (targetDigit.segments[4])
+							targetDigit.segments[4] = false;
+						else handleCollision(fallingDigit);
+					}
+				} else handleCollision(fallingDigit);
+			} else handleCollision(fallingDigit);
+
+			if (targetDigit.isBlank()) {
 				// Hooray! Do something?
 				++score;
 				attempts = 0;
 				if (faller == 1)
 					// We just destroyed the last digit, so add one now rather than waiting.
 					addNumber();
-			} else {
+			} else
 				// You only get (TODO) 5 goes at each digit.
 				if (++attempts >= 5)
 					addNumber();
-			}
 			faller = null;
 		}
 	} else if (digits[digits.length - 1].isBlank()) {
@@ -75,7 +111,15 @@ function tick() {
 	draw();
 }
 
-// Currently, adds an 8 after your last existing digit.
+function handleCollision(fallingDigit) {
+	var targetDigit = digits[faller - 1];
+	fallingDigit.segments.forEach(function(on, i) {
+		if (on)
+			targetDigit.segments[i] =
+				!targetDigit.segments[i];
+	});
+}
+
 function addNumber() {
 	attempts = 0;
 	for (var i = 0; i < 10; ++i)
@@ -102,13 +146,13 @@ function pickNext() {
 }
 
 function gameOver() {
-
+	gameOn = false;
+	gameIsOver = true;
+	stopTick();
 }
 
 function draw() {
-	render(digits.concat([
-		new Digit(),
-		next]));
+	render(digits, next);
 }
 
 function moveUp() {
@@ -155,7 +199,18 @@ function spinLeft() {
 }
 
 function spinRight() {
-	// CBA
-	for (var i = 0; i < 3; ++i)
-		spinLeft();
+	var offset = 0,
+		fallingDigit = digits[faller];
+	if (!fallingDigit)
+		return;
+	for (i = 4; i < 7; ++i)
+		if (fallingDigit.segments[i]) {
+			offset = 3;
+			break;
+		}
+	var top = fallingDigit.segments[offset];
+	fallingDigit.segments[offset] = fallingDigit.segments[offset + 1];
+	fallingDigit.segments[offset + 1] = fallingDigit.segments[offset + 3];
+	fallingDigit.segments[offset + 3] = fallingDigit.segments[offset + 2];
+	fallingDigit.segments[offset + 2] = top;
 }
