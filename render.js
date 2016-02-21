@@ -33,6 +33,7 @@ function show(text) {
 	display.pattern = '#.#.#.#.#.#.#.#.';
 	text = text.toString().toLowerCase().replace(/(.)/g, '$1 ');
 	while (text.length < display.pattern.length)
-		text = ' '+ text;
+		text = ' ' + text;
+	console.log(text.replace(/ /g, '_'));
 	display.setValue(text);
 }

@@ -6,7 +6,11 @@ var digits,
 	score,
 	attempts,
 	fastFalling,
+	level,
+	pattern,
+	targetNumbers,
 	faller = null;
+blankDigits();
 
 document.addEventListener('DOMContentLoaded', function () {
 	show('0161tr15');
@@ -39,12 +43,34 @@ function init() {
 	fastFalling = false;
 	score = 0;
 	attempts = 0;
-	digits = [];
-	for (var i = 0; i < 8; ++i)
-		digits.push(new Digit());
-	addNumber();
-	pickNext();
-	tick();
+	level = 0;
+	pattern = 3;
+	nextLevel();
+}
+
+function nextLevel() {
+	stopTick();
+	if (++pattern > 3) {
+		pattern = 1;
+		++level;
+	}
+	if (level == 10)
+		level = 7;
+	targetNumbers = level + 6;
+	show(level + '-' + pattern);
+	setTimeout(function() {
+		show(level + '-' + pattern);
+	}, 100);
+	setTimeout(function() {
+		show(score);
+	}, 1800);
+	setTimeout(function() {
+		blankDigits();
+		for (var i = 0; i < pattern + (level > 3); ++i)
+			addNumber();
+		pickNext();
+		tick();
+	}, 3600);
 }
 
 function stopTick() {
@@ -57,23 +83,30 @@ function tick() {
 	if (faller !== null) {
 		if (digits[faller - 1].isBlank()) {
 			digits[faller - 1] = digits[faller];
-			digits[faller] = new Digit();
+			digits[faller] = new Digit(7);
 			--faller;
 		} else {
 			// Collision!
-			fastFalling = false;
 			var fallingDigit = digits[faller],
 				targetDigit = digits[faller - 1],
 				segmentCount = 0,
+				bonusLine = 1;
 				loneSegmentIsHorizontal = null;
 			// The faller has landed. Destroy it.
-			digits[faller] = new Digit();
+			digits[faller] = new Digit(7);
 
 			if (fallingDigit.segmentCount() == 1) {
+				console.log('Single segment landing...');
+
+				while (bonusLine < faller &&
+						digits[faller - bonusLine - 1].matches(targetDigit))
+					++bonusLine;
+
 				var segment = fallingDigit.loneSegment(),
 					isVertical = !!(segment % 3);
 				// A single vertical segment is side-agnostic
 				if (isVertical) {
+					console.log('Vertical segment landing...');
 					if (segment < 3) {
 						if (targetDigit.segments[2])
 							targetDigit.segments[2] = false;
@@ -91,12 +124,28 @@ function tick() {
 			} else handleCollision(fallingDigit);
 
 			if (targetDigit.isBlank()) {
+				console.log('Digit cleared!');
 				// Hooray! Do something?
-				++score;
+				if (bonusLine >= 3)
+					score += bonusLine * 300;
+				else
+					bonusLine = 1;
+				while (bonusLine > 0) {
+					digits[faller - bonusLine] = new Digit(7);
+					--bonusLine;
+					score += (faller - bonusLine + 1) * 10;
+					--targetNumbers;
+				}
+				if (targetNumbers <= 0) {
+					score += level * 50 + pattern * 1000;
+					nextLevel();
+					return;
+				} else console.log(targetNumbers + ' digits to go')
 				attempts = 0;
 				if (faller == 1)
 					// We just destroyed the last digit, so add one now rather than waiting.
 					addNumber();
+				console.log('Score: ' + score);
 			} else
 				// You only get (TODO) 5 goes at each digit.
 				if (++attempts >= 5)
@@ -106,12 +155,14 @@ function tick() {
 	} else if (digits[digits.length - 1].isBlank()) {
 		faller = digits.length - 1;
 		digits[faller] = next;
+		fastFalling = false;
 		pickNext();
 	} else gameOver();
 	draw();
 }
 
 function handleCollision(fallingDigit) {
+	console.log('Checking segments of collision...');
 	var targetDigit = digits[faller - 1];
 	fallingDigit.segments.forEach(function(on, i) {
 		if (on)
@@ -133,7 +184,7 @@ function addNumber() {
 }
 
 function pickNext() {
-	next = new Digit();
+	next = new Digit(7);
 	var offset = (Math.random() < 0.5) ? 0 : 3,
 		toLight = -~(Math.random() * 3);
 	while (toLight) {
@@ -146,6 +197,7 @@ function pickNext() {
 }
 
 function gameOver() {
+	console.log('GAME OVER');
 	gameOn = false;
 	gameIsOver = true;
 	stopTick();
@@ -213,4 +265,10 @@ function spinRight() {
 	fallingDigit.segments[offset + 1] = fallingDigit.segments[offset + 3];
 	fallingDigit.segments[offset + 3] = fallingDigit.segments[offset + 2];
 	fallingDigit.segments[offset + 2] = top;
+}
+
+function blankDigits() {
+	digits = [];
+	for (var i = 0; i < 8; ++i)
+		digits.push(new Digit(7));
 }
