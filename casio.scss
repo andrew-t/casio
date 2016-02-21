@@ -1,3 +1,69 @@
 ---
 ---
 
+@media screen and (max-aspect-ratio: 10/14) {
+	#calculator {
+		width: 100vw;
+		height: 140vw;
+		top: calc(50vh - 70vw);
+		left: 0;
+	}
+}
+@media screen and (min-aspect-ratio: 10/14) {
+	#calculator {
+		width: 71.4vh;
+		height: 100vh;
+		top: 0;
+		left: calc(50vw - 35.7vh);
+	}
+}
+
+#calculator {
+	position: absolute;
+	background: url('calculator.svg');
+	background-size: contain;
+	background-repeat: no-repeat;
+
+	> canvas {
+		position: absolute;
+		top: 16%;
+		height: 5%;
+		&#screen {
+			left: 18%;
+		}
+		&#next {
+			right: 22%;
+		}
+	}
+
+	> div {
+		// background: red;
+		cursor: pointer;
+		position: absolute;
+		width: 13%;
+		height: 8%;
+
+		&#go {
+			left: 15%;
+			bottom: 11.5%;
+		}
+		&#left {
+			left: 44%;
+			bottom: 12%;
+		}
+		&#turn {
+			left: 59%;
+			bottom: 12%;
+		}
+		&#up {
+			left: 73%;
+			bottom: 31%;
+		}
+		&#down {
+			left: 74%;
+			bottom: 12%;
+			height: 18%;
+		}
+	}
+}
+

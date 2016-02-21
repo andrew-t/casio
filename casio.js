@@ -35,6 +35,25 @@ document.addEventListener('DOMContentLoaded', function () {
 		draw();
 		e.preventDefault();
 	});
+	document.getElementById('go')
+		.addEventListener('click', function() {
+			if (!gameOn) {
+				if (gameIsOver) {
+					gameIsOver = false;
+					show(score);
+				} else init();
+			}
+		});
+	document.getElementById('left')
+		.addEventListener('click', function(e) {
+			if (gameOn) fastFalling = true;
+		});
+	document.getElementById('up')
+		.addEventListener('click', moveUp);
+	document.getElementById('down')
+		.addEventListener('click', moveDown);
+	document.getElementById('turn')
+		.addEventListener('click', spinLeft);
 });
 
 function init() {
