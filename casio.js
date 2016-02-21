@@ -59,9 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function init() {
 	stopTick();
 	gameOn = true;
-	fastFalling = false;
 	score = 0;
-	attempts = 0;
 	level = 0;
 	pattern = 3;
 	nextLevel();
@@ -75,6 +73,9 @@ function nextLevel() {
 	}
 	if (level == 10)
 		level = 7;
+	fastFalling = false;
+	attempts = 0;
+	faller = null;
 	targetNumbers = level + 6;
 	show(level + '-' + pattern);
 	setTimeout(function() {
@@ -98,7 +99,6 @@ function stopTick() {
 		ticker = null;
 	}
 }
-
 function reTick() {
 	stopTick();
 	ticker = setTimeout(tick, fastFalling ? 100 : 500);
