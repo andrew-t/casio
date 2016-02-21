@@ -93,12 +93,18 @@ function nextLevel() {
 }
 
 function stopTick() {
-	if (ticker)
+	if (ticker) {
 		clearTimeout(ticker);
+		ticker = null;
+	}
 }
 
-function tick() {
+function reTick() {
+	stopTick();
 	ticker = setTimeout(tick, fastFalling ? 100 : 500);
+}
+function tick() {
+	reTick();
 	if (faller !== null) {
 		if (digits[faller - 1].isBlank()) {
 			digits[faller - 1] = digits[faller];
@@ -106,6 +112,8 @@ function tick() {
 			--faller;
 		} else {
 			// Collision!
+			fastFalling = false;
+			reTick();
 			var fallingDigit = digits[faller],
 				targetDigit = digits[faller - 1],
 				segmentCount = 0,
